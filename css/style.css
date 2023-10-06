@@ -1,0 +1,302 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+#map {
+  width: 100%;
+  height: 140vh;
+  margin: 0;
+  padding: 0;
+}
+#selectContainer {
+  position: fixed;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  padding: 11px 0;
+}
+
+#countrySelect {
+  width: 200px;
+  margin: 0 auto;
+}
+thead {
+  text-align: center;
+
+}
+
+
+/*----------------Preloader-----------------*/
+#preloader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: rgba(178, 175, 186, 0.9);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+#loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #0d0e0f;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 2s linear infinite;
+  
+}
+#preloaderText {
+  position: absolute;
+  margin-top: -180px;
+  font-family:Impact, Haettenschweiler, 'Arial Narrow', sans-serif;
+}
+
+#preloader img {
+  width: 50px;
+  height: 50px;
+  margin-top: 10px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/*-------------------------------------------*/
+
+.modal-footer {
+  margin: auto;
+}
+
+.countryInfo th {
+  text-align: left;
+}
+
+.countryInfo td {
+  text-align: right;
+}
+
+.weatherHead {
+  background-color: wheat !important;
+}
+.countryInfoHead {
+  background-color: wheat !important;
+}
+.newsHead {
+  background-color: wheat !important;
+}
+
+.weatherTable td {
+  text-align: center;
+}
+
+.weatherbground {
+  background-color: lightskyblue !important;
+  border-radius: 100%;
+}
+
+.weatherIcon {
+  width: 50%;
+  margin: auto;
+  display: block;
+  padding-top: 25%;
+}
+
+
+
+
+
+
+#country {
+  width: 200px;
+  margin: 0 auto;
+}
+
+#wikiThumbnail {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.wikiImg {
+  width: 60px;
+  height: 60px;
+
+}
+
+#articleLink {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+#articleLink1 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#article1Img {
+  width: 30px;
+  height: 30px;
+
+}
+
+#article2Img {
+  width: 30px;
+  height: 30px;
+
+}
+
+#article3Img {
+  width: 30px;
+  height: 30px;
+
+}
+
+#countryFlag {
+  display: block;
+  margin: 0 auto;
+  
+}
+
+
+
+/*----------------Buttons-----------------*/
+#countryBtn {
+  width: 40px;
+  height: 40px;
+  background-image: url("../icons/information.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-color: white;
+  background-size: 80%;
+}
+
+#weatherBtn {
+  width: 40px;
+  height: 40px;
+  background-image: url("../icons/cloudy.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-color: white;
+  background-size: 80%;
+}
+
+#newsBtn {
+  width: 40px;
+  height: 40px;
+  background-image: url("../icons/news.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  background-color: white;
+  background-size: 80%;
+}
+
+#wikiBtn {
+  width: 40px;
+  height: 40px;
+  background-image: url("../icons/wikipedia.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: white;
+  background-size: 80%;
+}
+
+/*--------------Map Markers Buttons------------------*/
+#castles {
+ 
+  width: 40px;
+  height: 40px;
+  transition-duration: .3s;
+  background-image: url("../icons/castle.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: white;
+  background-size: 80%;
+}
+
+#stadiums {
+  width: 40px;
+  height: 40px;
+  transition-duration: .3s;
+  background-image: url("../icons/stadium.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: white;
+  background-size: 80%;
+}
+
+#mountains {
+  width: 40px;
+  height: 40px;
+  transition-duration: .3s;
+  background-image: url("../icons/mountain.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: white;
+  background-size: 80%;
+}
+
+#airports {
+  width: 40px;
+  height: 40px;
+  transition-duration: .3s;
+  background-image: url("../icons/airport.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: white;
+  background-size: 80%;
+}
+
+/* Responsive Design*/
+
+
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+    
+  
+  
+  
+  #countryBtn, #weatherBtn, #newsBtn, #wikiBtn, #castles, #airports, #stadiums, #mountains  {
+      width: 35px;
+      height: 35px;
+  }
+
+
+}
+
+@media only screen and (max-width: 768px)  {
+    
+  
+  #countryInfoModal {
+    font-size: 15px;
+  }
+
+
+  
+  #countryBtn, #weatherBtn, #newsBtn, #wikiBtn, #castles, #airports, #stadiums, #mountains {
+      width: 30px;
+      height: 30px;
+  }
+
+
+}
