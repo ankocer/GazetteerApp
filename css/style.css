@@ -98,6 +98,30 @@ thead {
   background-color: wheat !important;
 }
 
+
+
+#exchangeRatesArrow {
+  margin-top: 20px;
+}
+
+#exchangeModal .modal-body {
+  display: flex;
+  align-items:  center;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background-color: rgb(233, 222, 200);
+  
+}
+#exchangeRatesBase input{
+  text-align: center;
+  width: 250px;
+}
+#exchangeRatesArrow1 select, input {
+  text-align: center !important;
+  width: 250px;
+}
+
 .weatherTable td {
   text-align: center;
 }
@@ -222,6 +246,16 @@ thead {
   background-size: 80%;
 }
 
+#exchangeBtn {
+  width: 40px;
+  height: 40px;
+  background-image: url("../icons/exchange-rate.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-color: white;
+  background-size: 80%;
+}
+
 /*--------------Map Markers Buttons------------------*/
 #castles {
  
@@ -276,7 +310,7 @@ thead {
   
   
   
-  #countryBtn, #weatherBtn, #newsBtn, #wikiBtn, #castles, #airports, #stadiums, #mountains  {
+  #countryBtn, #weatherBtn, #newsBtn, #wikiBtn, #exchangeBtn, #castles, #airports, #stadiums, #mountains  {
       width: 35px;
       height: 35px;
   }
@@ -293,7 +327,7 @@ thead {
 
 
   
-  #countryBtn, #weatherBtn, #newsBtn, #wikiBtn, #castles, #airports, #stadiums, #mountains {
+  #countryBtn, #weatherBtn, #newsBtn, #wikiBtn, #exchangeBtn, #castles, #airports, #stadiums, #mountains {
       width: 30px;
       height: 30px;
   }

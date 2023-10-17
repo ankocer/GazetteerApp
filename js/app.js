@@ -16,19 +16,33 @@ var satellite = L.tileLayer(
 var basemaps = {
   "Streets": streets,
   "Satellite": satellite
+
 };
+var castleMarkerCluster = L.markerClusterGroup();
+var stadiumMarkerCluster = L.markerClusterGroup();
+var mountainMarkerCluster = L.markerClusterGroup();
+var airportMarkerCluster = L.markerClusterGroup();
+
 
 var map = L.map("map", {
   layers: [streets]
 }).setView([54.5, -4], 6);
 
-var layerControl = L.control.layers(basemaps).addTo(map);
+
+var layerControl = L.control.layers(basemaps, {
+  "Castles": castleMarkerCluster,
+  "Stadiums": stadiumMarkerCluster,
+  "Mountains": mountainMarkerCluster,
+  "Airports": airportMarkerCluster
+}).addTo(map);
+
 
 
 let countryNames = [];
 let countries = [];
 let countryIso = [];
-
+let exchangeRates = {};
+let currencyNames = {};
 
 let currentCountry;
 
@@ -58,7 +72,8 @@ function Country(name, iso_a2, iso_a3, iso_n3, geoType, coordinates) {
   this.languages;
   this.currencyCode;
   this.exchangeRate;
-  
+
+
   //2. weather information
 
   this.weather_current = [];
@@ -131,16 +146,14 @@ $(document).ready(() => {
         if (currentCountryLayer) {
           map.removeLayer(currentCountryLayer);
         }
-        airportBtn.enable();
-        castleBtn.enable();
-        stadiumBtn.enable();
-        mountainBtn.enable();
+        
         markerClusters = L.markerClusterGroup();
-        map.eachLayer(function (layer){
-          if (layer !==streets){
+        map.eachLayer(function (layer) {
+          if (layer !== streets) {
             map.removeLayer(layer);
           }
         })
+
         currentCountryLayer = new L.geoJSON(data, {
           style: function (feature) {
             if (feature.properties.iso_a2 === selectedCountryISO) {
@@ -158,6 +171,7 @@ $(document).ready(() => {
             }
           }
         }).addTo(map)
+        addCountryMarkers(currentCountry);
         hidePreloader();
       }
       //-------------------Find the users location and update the map-----------------
@@ -191,6 +205,8 @@ $(document).ready(() => {
         await getWikiInfo(currentCountry);
         await getMapMarkers(currentCountry);
         await updateMap(currentCountry.iso_a2);
+        await getCurrencyName();
+
 
       }
       //---------------auto map generating if user refuses to provide location information-----
@@ -208,13 +224,14 @@ $(document).ready(() => {
         await getWikiInfo(currentCountry);
         await getMapMarkers(currentCountry);
         await updateMap(currentCountry.iso_a2);
+        await getCurrencyName();
 
       }
 
       getLocation();
       //-------------Map information to be updated with new country selection-------
       $('#country').change(async () => {
-        
+
 
         var e = document.getElementById("country");
         var value = e.options[e.selectedIndex].value;
@@ -236,7 +253,7 @@ $(document).ready(() => {
         await getWikiInfo(currentCountry);
         await getMapMarkers(currentCountry);
         await updateMap(currentCountry.iso_a2);
-
+        await getCurrencyName();
       });
     }
 
@@ -388,7 +405,46 @@ async function getExchangeRate(country) {
     success: function (result) {
       //console.log(JSON.stringify(result));
       if (result.status.name == "ok") {
-        country.exchangeRate = result['data']['rates'][country.currencyCode];
+        //country.exchangeRate = result['data']['rates'][country.currencyCode];
+        //currencyList.push([result['data']['rates']])
+        //console.log(currencyList[0][0]);
+
+        var rates = result.data.rates;
+        for (var currencyCode in rates) {
+          var exchangeRate = rates[currencyCode];
+          exchangeRates[currencyCode] = {
+            currencyCode: currencyCode,
+            exchangeRate: exchangeRate
+          };
+        }
+
+        console.log(exchangeRates['GBP']);
+
+      }
+    },
+    error: function (jqXHR, textStatus, errorThrown) {
+      console.log(JSON.stringify(jqXHR));
+      console.log(JSON.stringify(textStatus));
+      console.log(JSON.stringify(errorThrown));
+    }
+  });
+}
+
+async function getCurrencyName() {
+  await $.ajax({
+    url: "php/getCurrencyName.php",
+    type: 'GET',
+    dataType: 'json',
+    data: {},
+    success: function (result) {
+      //console.log(JSON.stringify(result));
+      if (result.status.name == "ok") {
+
+        currencyNames = result.data
+
+        console.log(currencyNames[currentCountry.currencyCode])
+
+
       }
     },
     error: function (jqXHR, textStatus, errorThrown) {
@@ -653,7 +709,7 @@ L.easyButton({
       $('#countryInfoArea').text(Math.floor(currentCountry.area));
       $('#countryInfoLanguage').text(currentCountry.languages);
       $('#countryInfoCurrencyCode').text(currentCountry.currencyCode);
-      $('#countryInfoExchange').text(`1 USD = ${(currentCountry.exchangeRate).toFixed(2)} ${currentCountry.currencyCode}`);
+     
     }
   }, {
     icon: '&#x238C;',
@@ -774,20 +830,176 @@ L.easyButton({
   }]
 }).addTo(map);
 
+
+/*--------------------- Currency Exchanger Info  (Modal-5)-----------------------------------------------*/
+L.easyButton({
+
+  position: 'topleft',
+  id: 'exchangeBtn',
+  states: [{
+    icon: "none",
+    stateName: 'unchecked',
+    title: 'Show Country Information',
+    onClick: function (btn, map) {
+
+      $("#exchangeModal").modal("show");
+
+      $(".close").click(function () {
+        $("#exchangeModal").modal('hide');
+      });
+      $('#exchangeRatesBaseAmountLabel').html(`${currencyNames[currentCountry.currencyCode]} (${currentCountry.currencyCode})`);
+
+      var select = $('#exchangeCurrency');
+      var baseAmountInput = $('#exchangeRatesBaseAmount');
+      var targetAmountInput = $('#exchangeRatesTargetAmount');
+
+      // USD selection as default
+      select.append($('<option></option>').attr('value', 'USD').text('United States Dollar (USD)'));
+
+      // Adding currency code to the selection list
+      for (var currencyCode in currencyNames) {
+        var currencyName = currencyNames[currencyCode];
+        select.append($('<option></option>').attr('value', currencyCode).text(currencyName + ' (' + currencyCode + ')'));
+      }
+      var defaultBaseAmount = 10;
+      baseAmountInput.val(defaultBaseAmount);
+      var targetCurrency = select.val();
+      var baseCurrency = currentCountry.currencyCode;
+      var baseAmount = parseFloat(baseAmountInput.val()) || defaultBaseAmount;
+      var targetExchangeRate = exchangeRates[targetCurrency].exchangeRate / exchangeRates[baseCurrency].exchangeRate;
+      targetAmountInput.val((baseAmount * targetExchangeRate).toFixed(2));
+
+      baseAmountInput.on('input', function () {
+        var baseCurrency = currentCountry.currencyCode;
+        var targetCurrency = $('#exchangeCurrency').val();
+        var baseAmount = parseFloat(baseAmountInput.val()) || defaultBaseAmount;
+        var targetExchangeRate = exchangeRates[targetCurrency].exchangeRate / exchangeRates[baseCurrency].exchangeRate;
+        targetAmountInput.val((baseAmount * targetExchangeRate).toFixed(2));
+      })
+      baseAmountInput.on('change', function () {
+        var baseCurrency = currentCountry.currencyCode;
+        var targetCurrency = $('#exchangeCurrency').val();
+        var baseAmount = parseFloat(baseAmountInput.val()) || defaultBaseAmount;
+
+        var targetExchangeRate = exchangeRates[targetCurrency].exchangeRate / exchangeRates[baseCurrency].exchangeRate;
+        targetAmountInput.val((baseAmount * targetExchangeRate).toFixed(2));
+      })
+      targetAmountInput.on('input', function () {
+        var baseCurrency = currentCountry.currencyCode;
+        var targetCurrency = $('#exchangeCurrency').val();
+        var baseAmount = parseFloat(targetAmountInput.val()) || 0;
+        var baseExchangeRate = exchangeRates[targetCurrency].exchangeRate * (exchangeRates[baseCurrency].exchangeRate);
+        baseAmountInput.val((baseAmount * baseExchangeRate).toFixed(2));
+      })
+      targetAmountInput.on('change', function () {
+        var baseCurrency = currentCountry.currencyCode;
+        var targetCurrency = $('#exchangeCurrency').val();
+        var baseAmount = parseFloat(targetAmountInput.val()) || 0;
+        var baseExchangeRate = exchangeRates[targetCurrency].exchangeRate * (exchangeRates[baseCurrency].exchangeRate);
+        baseAmountInput.val((baseAmount * baseExchangeRate).toFixed(2));
+      })
+      select.on('change', function () {
+        var targetCurrency = $(this).val();
+        var baseUSD = exchangeRates['USD'].exchangeRate
+        var baseCurrency = currentCountry.currencyCode;
+        var baseAmount = parseFloat(baseAmountInput.val()) || defaultBaseAmount;
+
+
+        var targetExchangeRate = (baseUSD / exchangeRates[baseCurrency].exchangeRate) * exchangeRates[targetCurrency].exchangeRate;
+        targetAmountInput.val((baseAmount * targetExchangeRate).toFixed(2));
+        targetAmountInput.on('input', function () {
+          var targetCurrency = $('#exchangeCurrency').val();
+          var targetAmount = parseFloat(targetAmountInput.val()) || defaultBaseAmount;
+          var baseCurrency = currentCountry.currencyCode;
+          var baseExchangeRate = 1 / ((baseUSD / exchangeRates[baseCurrency].exchangeRate) * exchangeRates[targetCurrency].exchangeRate);
+          baseAmountInput.val((targetAmount * baseExchangeRate).toFixed(2));
+        });
+        targetAmountInput.on('change', function () {
+          var targetCurrency = $('#exchangeCurrency').val();
+          var targetAmount = parseFloat(targetAmountInput.val()) || defaultBaseAmount;
+          var baseCurrency = currentCountry.currencyCode;
+          var baseExchangeRate = 1 / ((baseUSD / exchangeRates[baseCurrency].exchangeRate) * exchangeRates[targetCurrency].exchangeRate);
+          baseAmountInput.val((targetAmount * baseExchangeRate).toFixed(2));
+        });
+        
+      });
+
+
+    }
+  }, {
+    icon: '&#x238C;',
+    stateName: 'checked',
+    onClick: function (btn, map) {
+      btn.state('unchecked');
+    }
+  }]
+}).addTo(map);
+
 var markerClusters = L.markerClusterGroup();
 
 var MapIcon = L.Icon.extend({
   options: {
     iconSize: [25, 25],
-    popupAnchor: [0, -200]
+    popupAnchor: [0, -50]
   }
 });
 
+// Loading all markerClusters to the screen
+
+
+function addCountryMarkers(country) {
+  
+
+  var castleIcon = new MapIcon({ iconUrl: 'icons/castle.png' });
+  var stadiumIcon = new MapIcon({ iconUrl: 'icons/stadium.png' });
+  var mountainIcon = new MapIcon({ iconUrl: 'icons/mountain.png' });
+  var airportIcon = new MapIcon({ iconUrl: 'icons/airport.png' });
+
+  for (i = 0; i < country.marker_castles.length; i++) {
+    var c = L.marker(new L.LatLng(country.marker_castles[i][1], country.marker_castles[i][2]), { icon: castleIcon }).bindPopup(`
+      <b>Castle Name:</b> ${country.marker_castles[i][0]} <br>
+    `);
+    markerClusters.addLayer(c);
+  }
+
+  for (i = 0; i < country.marker_stadiums.length; i++) {
+    var s = L.marker(new L.LatLng(country.marker_stadiums[i][1], country.marker_stadiums[i][2]), { icon: stadiumIcon }).bindPopup(`
+      <b>Stadium Name:</b> ${country.marker_stadiums[i][0]} <br>
+    `);
+    markerClusters.addLayer(s);
+  }
+
+  for (i = 0; i < country.marker_mountains.length; i++) {
+    var m = L.marker(new L.LatLng(country.marker_mountains[i][1], country.marker_mountains[i][2]), { icon: mountainIcon }).bindPopup(`
+      <b>Mountain Name:</b> ${country.marker_mountains[i][0]} <br>
+    `);
+    markerClusters.addLayer(m);
+  }
+
+  for (i = 0; i < country.marker_airports.length; i++) {
+    var a = L.marker(new L.LatLng(country.marker_airports[i][1], country.marker_airports[i][2]), { icon: airportIcon }).bindPopup(`
+      <b>Airport Name:</b> ${country.marker_airports[i][0]} <br>
+    `);
+    markerClusters.addLayer(a);
+  }
+
+  map.addLayer(markerClusters);
+}
+//Hiding all markerClusters to the screen
+
+function removeAllMarkers() {
+  markerClusters.clearLayers(); 
+}
+//Variables defined to prevent loading data into marker lists every time the button is clicked
+
+var castleDataFetched = false;
+var stadiumDataFetched = false;
+var mountainDataFetched = false;
+var airportDataFetched = false;
+
 
 /*------------------Castle Icon Button---------------------------*/
-function castleDisable() {
-  castleBtn.disable();
-}
+
 var castleBtn = L.easyButton({
   position: 'topright',
   id: 'castles',
@@ -796,36 +1008,42 @@ var castleBtn = L.easyButton({
     stateName: 'unchecked',
     title: 'Show Top 30 Castles',
     onClick: function (btn, map) {
-
-
       var castleIcon = new MapIcon({ iconUrl: 'icons/castle.png' });
-
-      for (i = 0; i < currentCountry.marker_castles.length; i++) {
-
-        var m = L.marker(new L.LatLng(currentCountry.marker_castles[i][1], currentCountry.marker_castles[i][2]), { icon: castleIcon }).bindPopup(`
-                      <b>Castle Name:</b> ${currentCountry.marker_castles[i][0]} <br> 
-                       
-                  `);
-        markerClusters.addLayer(m);
-
+      removeAllMarkers();
+      
+      if (!map.hasLayer(castleMarkerCluster)) {
+        map.addLayer(castleMarkerCluster);
+        
+        
+      } 
+      
+      if (!castleDataFetched) {
+        for (i = 0; i < currentCountry.marker_castles.length; i++) {
+          var c = L.marker(new L.LatLng(currentCountry.marker_castles[i][1], currentCountry.marker_castles[i][2]), { icon: castleIcon }).bindPopup(`
+            <b>Castle Name:</b> ${currentCountry.marker_castles[i][0]} <br> 
+          `);
+          castleMarkerCluster.addLayer(c);
+         
+          
+        }
+        castleDataFetched = true;
+        
       }
-
-      map.addLayer(markerClusters);
-
-      castleDisable();
+  
+      
     }
   }, {
     icon: "none",
     stateName: 'checked',
     onClick: function (btn, map) {
+      
       btn.state('unchecked');
+      
     }
   }]
 }).addTo(map);
 //-------------------------------Stadiums Icon Button--------------
-function stadiumDisable() {
-  stadiumBtn.disable();
-}
+
 var stadiumBtn = L.easyButton({
   position: 'topright',
   id: 'stadiums',
@@ -834,37 +1052,38 @@ var stadiumBtn = L.easyButton({
     stateName: 'unchecked',
     title: 'Show Top 30 Stadiums',
     onClick: function (btn, map) {
-
       var stadiumIcon = new MapIcon({ iconUrl: 'icons/stadium.png' });
-
-      for (i = 0; i < currentCountry.marker_stadiums.length; i++) {
-
-        var m = L.marker(new L.LatLng(currentCountry.marker_stadiums[i][1], currentCountry.marker_stadiums[i][2]), { icon: stadiumIcon }).bindPopup(`
-                      <b>Stadium Name:</b> ${currentCountry.marker_stadiums[i][0]} <br> 
-                       
-                  `);
-        markerClusters.addLayer(m);
-
+      removeAllMarkers();
+      if (!map.hasLayer(stadiumMarkerCluster)) {
+        map.addLayer(stadiumMarkerCluster);
+        
+      } 
+      if (!stadiumDataFetched) {
+        for (i = 0; i < currentCountry.marker_stadiums.length; i++) {
+          var s = L.marker(new L.LatLng(currentCountry.marker_stadiums[i][1], currentCountry.marker_stadiums[i][2]), { icon: stadiumIcon }).bindPopup(`
+            <b>Stadium Name:</b> ${currentCountry.marker_stadiums[i][0]} <br> 
+          `);
+          stadiumMarkerCluster.addLayer(s);
+          
+        }
+        stadiumDataFetched = true;
+      
       }
-
-      map.addLayer(markerClusters);
-
-      stadiumDisable();
+  
+      
     }
   }, {
     icon: "none",
     stateName: 'checked',
     onClick: function (btn, map) {
       btn.state('unchecked');
+      map.removeLayer(stadiumMarkerCluster);
     }
   }]
 }).addTo(map);
 
 //---------------------------Mountains Icon Button------------
-function mountainDisable() {
-  mountainBtn.disable();
 
-}
 var mountainBtn = L.easyButton({
   position: 'topright',
   id: 'mountains',
@@ -875,33 +1094,36 @@ var mountainBtn = L.easyButton({
     onClick: function (btn, map) {
 
       var mountainIcon = new MapIcon({ iconUrl: 'icons/mountain.png' });
-
+      removeAllMarkers();
+      if (!map.hasLayer(mountainMarkerCluster)) {
+        map.addLayer(mountainMarkerCluster);
+        
+      } 
+      if (!mountainDataFetched){
       for (i = 0; i < currentCountry.marker_mountains.length; i++) {
 
         var m = L.marker(new L.LatLng(currentCountry.marker_mountains[i][1], currentCountry.marker_mountains[i][2]), { icon: mountainIcon }).bindPopup(`
                       <b>Mountain Name:</b> ${currentCountry.marker_mountains[i][0]} <br> 
                        
                   `);
-        markerClusters.addLayer(m);
+        mountainMarkerCluster.addLayer(m);
 
       }
-
-      map.addLayer(markerClusters);
-
-      mountainDisable();
+      mountainDataFetched = true;
+    }
+ 
     }
   }, {
     icon: "none",
     stateName: 'checked',
     onClick: function (btn, map) {
       btn.state('unchecked');
+      map.removeLayer(mountainMarkerCluster);
     }
   }]
 }).addTo(map);
 //---------------------------------Airport Icon Button------------------------
-function airportDisable() {
-  airportBtn.disable();
-}
+
 var airportBtn = L.easyButton({
   position: 'topright',
   id: 'airports',
@@ -912,27 +1134,32 @@ var airportBtn = L.easyButton({
     onClick: function (btn, map) {
 
       var airportIcon = new MapIcon({ iconUrl: 'icons/airport.png' });
-
+      removeAllMarkers();
+      if (!map.hasLayer(airportMarkerCluster)) {
+        map.addLayer(airportMarkerCluster);
+        
+      } 
+      if (!airportDataFetched){
       for (i = 0; i < currentCountry.marker_airports.length; i++) {
 
-        var m = L.marker(new L.LatLng(currentCountry.marker_airports[i][1], currentCountry.marker_airports[i][2]), { icon: airportIcon }).bindPopup(`
+        var a = L.marker(new L.LatLng(currentCountry.marker_airports[i][1], currentCountry.marker_airports[i][2]), { icon: airportIcon }).bindPopup(`
                       <b>Airport Name:</b> ${currentCountry.marker_airports[i][0]} <br> 
                        
                   `);
-        markerClusters.addLayer(m);
+        airportMarkerCluster.addLayer(a);
 
       }
-
-      map.addLayer(markerClusters);
-
-      airportDisable();
+      airportDataFetched = true;
+    }
+  
+      
     }
   }, {
     icon: "none",
     stateName: 'checked',
     onClick: function (btn, map) {
       btn.state('unchecked');
+      map.removeLayer(airportMarkerCluster);
     }
   }]
 }).addTo(map);
-

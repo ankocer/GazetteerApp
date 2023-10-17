@@ -75,7 +75,7 @@
                 </tr>
               </thead>
 
-              <tbo class="countryInfo">
+              <tb class="countryInfo">
                 <tr>
                   <th scope="row">Country Name</th>
                   <td id="countryInfoName"></td>
@@ -108,10 +108,7 @@
                   <th scope="row">Currency Code</th>
                   <td id="countryInfoCurrencyCode"></td>
                 </tr>
-                <tr>
-                  <th scope="row">Current Exchange Rate</th>
-                  <td id="countryInfoExchange"></td>
-                </tr>
+                
               </tbody>
             </table>
 
@@ -296,7 +293,39 @@
           </div>
         </div>
       </div>    
-
+      <!-- Modal 5 Currency Exchanger-->
+      <div class="modal fade" id="exchangeModal" tabindex="-1" role="dialog" aria-labelledby="Exchange Modal"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+          <div class="modal-content">
+  
+            <div class="modal-header" id="exchangeModalHeader">
+              <h5 class="modal-title modalTitle" ><b>Exchange Rates</b></h5>
+              
+  
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+  
+            <div class="modal-body">
+              <div id="exchangeRatesBase">
+                <p id="exchangeRatesBaseAmountLabel"></p>
+                <input id="exchangeRatesBaseAmount" type="number" class="form-control">
+              </div>
+              <p id="exchangeRatesArrow">⇵</p>
+              <div id="exchangeRatesArrow1">
+                <select id="exchangeCurrency" class="form-select" name="exchange currency" ></select>
+                <input id="exchangeRatesTargetAmount" class="form-control" type="number" >
+              </div>
+            </div>
+  
+            <div class="modal-footer">
+              <button type="button" class="btn btn-primary close" data-dismiss="modal">Close</button>
+            </div>
+          </div>
+        </div>
+      </div>    
 
   </main>
 
