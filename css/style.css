@@ -5,7 +5,7 @@ body {
 }
 #map {
   width: 100%;
-  height: 140vh;
+  height: 100vh;
   margin: 0;
   padding: 0;
 }
@@ -88,15 +88,6 @@ thead {
   text-align: right;
 }
 
-.weatherHead {
-  background-color: wheat !important;
-}
-.countryInfoHead {
-  background-color: wheat !important;
-}
-.newsHead {
-  background-color: wheat !important;
-}
 
 
 
@@ -110,8 +101,7 @@ thead {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  background-color: rgb(233, 222, 200);
-  
+  background-color: #adb5bd
 }
 #exchangeRatesBase input{
   text-align: center;
@@ -122,25 +112,6 @@ thead {
   width: 250px;
 }
 
-.weatherTable td {
-  text-align: center;
-}
-
-.weatherbground {
-  background-color: lightskyblue !important;
-  border-radius: 100%;
-}
-
-.weatherIcon {
-  width: 50%;
-  margin: auto;
-  display: block;
-  padding-top: 25%;
-}
-
-
-
-
 
 
 #country {
@@ -149,49 +120,19 @@ thead {
 }
 
 #wikiThumbnail {
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
+  width: 150px;
+  height: 120px;
+  
 }
 
 .wikiImg {
-  width: 60px;
-  height: 60px;
+  width: 140px;
+  height: 120px;
 
 }
-
-#articleLink {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-#articleLink1 {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#article1Img {
-  width: 30px;
-  height: 30px;
-
-}
-
-#article2Img {
-  width: 30px;
-  height: 30px;
-
-}
-
-#article3Img {
-  width: 30px;
-  height: 30px;
-
+#wikipediaArticleSummary {
+  margin-top: 5%;
+  margin-bottom: 5%;
 }
 
 #countryFlag {
@@ -256,51 +197,6 @@ thead {
   background-size: 80%;
 }
 
-/*--------------Map Markers Buttons------------------*/
-#castles {
- 
-  width: 40px;
-  height: 40px;
-  transition-duration: .3s;
-  background-image: url("../icons/castle.png");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-color: white;
-  background-size: 80%;
-}
-
-#stadiums {
-  width: 40px;
-  height: 40px;
-  transition-duration: .3s;
-  background-image: url("../icons/stadium.png");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-color: white;
-  background-size: 80%;
-}
-
-#mountains {
-  width: 40px;
-  height: 40px;
-  transition-duration: .3s;
-  background-image: url("../icons/mountain.png");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-color: white;
-  background-size: 80%;
-}
-
-#airports {
-  width: 40px;
-  height: 40px;
-  transition-duration: .3s;
-  background-image: url("../icons/airport.png");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-color: white;
-  background-size: 80%;
-}
 
 /* Responsive Design*/
 

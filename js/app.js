@@ -24,8 +24,59 @@ var map = L.map("map", {
   layers: [streets]
 }).setView([54.5, -4], 6);
 
+//Castle
+var castles = L.markerClusterGroup({
+  polygonOptions: {
+    fillColor: '#fff',
+    color: '#000',
+    weight: 2,
+    opacity: 1,
+    fillOpacity: 0.5
+  }
+}).addTo(map);
 
-var layerControl = L.control.layers(basemaps).addTo(map);
+//Stadium
+var stadiums = L.markerClusterGroup({
+  polygonOptions: {
+    fillColor: '#fff',
+    color: '#000',
+    weight: 2,
+    opacity: 1,
+    fillOpacity: 0.5
+  }
+}).addTo(map);
+
+//Mountain
+var mountains = L.markerClusterGroup({
+  polygonOptions: {
+    fillColor: '#fff',
+    color: '#000',
+    weight: 2,
+    opacity: 1,
+    fillOpacity: 0.5
+  }
+}).addTo(map);
+
+//Airport
+var airports = L.markerClusterGroup({
+  polygonOptions: {
+    fillColor: '#fff',
+    color: '#000',
+    weight: 2,
+    opacity: 1,
+    fillOpacity: 0.5
+  }
+}).addTo(map);
+
+
+var overlays = {
+  "Castles": castles,
+  "Stadiums": stadiums,
+  "Mountain": mountains,
+  "Airports": airports
+}
+
+var layerControl = L.control.layers(basemaps, overlays).addTo(map);
 
 
 
@@ -67,12 +118,15 @@ function Country(name, iso_a2, iso_a3, iso_n3, geoType, coordinates) {
 
   //2. weather information
 
-  this.weather_current = [];
-
+  this.weather_today = [];
+  this.weather_day1 = [];
+  this.weather_day2 = [];
   // 3. News information
   this.news_article1 = [];
   this.news_article2 = [];
   this.news_article3 = [];
+  this.news_article4 = [];
+  this.news_article5 = [];
   // 4. Wiki information
   this.wiki_info = [];
   // Marker Clusters
@@ -96,34 +150,33 @@ $(window).on('load', function () {
 $(document).ready(() => {
 
   showPreloader();
+  function addAllClustersToMap() {
+    map.addLayer(castles);
+    map.addLayer(stadiums);
+    map.addLayer(mountains);
+    map.addLayer(airports);
+  }
+
   // Get the country information
   $.ajax({
     type: 'GET',
-    url: "js/json/countryBorders.json",
+    url: "php/getCountryNames.php",
     data: {},
     dataType: 'json',
     success: function (data) {
 
 
       // ---------------- Create Country Objects ----------------
-      const results = data["features"]
-
+      const results = data["data"]
+      
       for (let i = 0; i < results.length; i++) {
-
-        let name = results[i]['properties']['name'];
-        let iso_a2 = results[i]['properties']['iso_a2'];
-        let iso_a3 = results[i]['properties']['iso_a3'];
-        let iso_n3 = results[i]['properties']['iso_n3'];
-        let geoType = results[i]['geometry']['type'];
-        let coordinates = results[i]['geometry']['coordinates'];
+        let name = results[i]['name'];
+        let iso_a2 = results[i]['code'];
 
         countryNames.push([name, iso_a2]);
 
-        countryData = new Country(name, iso_a2, iso_a3, iso_n3, geoType, coordinates);
-        countries.push(countryData);
-
-
       }
+
 
       //-------------------Generate Country List in HTML------------------
       listHTML += `<option value="Select..." selected>Select...</option>`;
@@ -132,37 +185,58 @@ $(document).ready(() => {
         listHTML += `<option value="${countryNames[i][1]}">${countryNames[i][0]}</option>`
       }
       $('#country').html(listHTML);
+
+      async function getSelectedCountryFeature(selectedCountryCode) {
+        return new Promise((resolve, reject) => {
+          $.ajax({
+            type: 'POST',
+            url: "php/getCountryFeatures.php",
+            data: { selectedCountryCode: selectedCountryCode },
+            dataType: 'json',
+            success: function (selectedCountryFeatureData) {
+              const selectedCountryFeature = selectedCountryFeatureData.data;
+              resolve(selectedCountryFeature);
+            },
+            error: function (error) {
+              console.error("Error fetching selected country feature: ", error);
+              reject(error);
+            }
+          });
+        });
+      }
+
       //---------------To create boundaries on the map-----------------
       async function updateMap(selectedCountryISO) {
         if (currentCountryLayer) {
           map.removeLayer(currentCountryLayer);
         }
-        
+        castles.clearLayers();
+        stadiums.clearLayers();
+        mountains.clearLayers();
+        airports.clearLayers();
+
         markerClusters = L.markerClusterGroup();
+
+
         map.eachLayer(function (layer) {
           if (layer !== streets) {
             map.removeLayer(layer);
           }
         })
-
-        currentCountryLayer = new L.geoJSON(data, {
-          style: function (feature) {
-            if (feature.properties.iso_a2 === selectedCountryISO) {
-              return {
-                color: 'grey',
-                weight: 2,
-                dashArray: '5, 5',
-                fillColor: 'lightgrey',
-                fillOpacity: 0.2,
-              }
-            } else {
-              return {
-                color: 'transparent',
-              }
-            }
+        const selectedCountryFeature = await getSelectedCountryFeature(selectedCountryISO);
+        currentCountryLayer = new L.geoJSON(selectedCountryFeature, {
+          style: {
+            color: 'grey',
+            weight: 2,
+            dashArray: '5, 5',
+            fillColor: 'lightgrey',
+            fillOpacity: 0.2,
           }
-        }).addTo(map)
+        }).addTo(map);
+        addAllClustersToMap();
+        map.fitBounds(currentCountryLayer.getBounds());
         addCountryMarkers(currentCountry);
+        map.addLayer(markerClusters);
         hidePreloader();
       }
       //-------------------Find the users location and update the map-----------------
@@ -183,8 +257,8 @@ $(document).ready(() => {
 
         var currentCountryObj = await getCurrentCountry(currentLat, currentLng);
         currentCountry = currentCountryObj;
+        $("#country").val(currentCountry.iso_a2).prop('selected', true);
 
-        console.log(currentCountry);
 
         map.setView([currentLat, currentLng], 6);
         //------------Calling the functions to get the country informations-----------
@@ -197,7 +271,7 @@ $(document).ready(() => {
         await getMapMarkers(currentCountry);
         await updateMap(currentCountry.iso_a2);
         await getCurrencyName();
-
+        await getSelectedCountryFeature(currentCountry.iso_a2);
 
       }
       //---------------auto map generating if user refuses to provide location information-----
@@ -216,23 +290,19 @@ $(document).ready(() => {
         await getMapMarkers(currentCountry);
         await updateMap(currentCountry.iso_a2);
         await getCurrencyName();
+        await getSelectedCountryFeature(currentCountry.iso_a2);
 
       }
 
       getLocation();
       //-------------Map information to be updated with new country selection-------
       $('#country').change(async () => {
-
-
         var e = document.getElementById("country");
         var value = e.options[e.selectedIndex].value;
         var selectedCountry = e.options[e.selectedIndex].text;
 
-
-
         var selectedCountryObj = new Country(selectedCountry, value, "", "", "", []);
         currentCountry = selectedCountryObj;
-
 
         await findAvgCoords(currentCountry);
         await getCurrentCountry(currentCountry.coordinates[0], currentCountry.coordinates[1]);
@@ -245,12 +315,12 @@ $(document).ready(() => {
         await getMapMarkers(currentCountry);
         await updateMap(currentCountry.iso_a2);
         await getCurrencyName();
+        await getSelectedCountryFeature(currentCountry.iso_a2);
+
       });
     }
 
   });
-
-
 });
 //----------------Finding country Average coordinates to update the map with new country selection-----------------
 async function findAvgCoords(country) {
@@ -396,9 +466,6 @@ async function getExchangeRate(country) {
     success: function (result) {
       //console.log(JSON.stringify(result));
       if (result.status.name == "ok") {
-        //country.exchangeRate = result['data']['rates'][country.currencyCode];
-        //currencyList.push([result['data']['rates']])
-        //console.log(currencyList[0][0]);
 
         var rates = result.data.rates;
         for (var currencyCode in rates) {
@@ -409,7 +476,7 @@ async function getExchangeRate(country) {
           };
         }
 
-        console.log(exchangeRates['GBP']);
+
 
       }
     },
@@ -433,7 +500,7 @@ async function getCurrencyName() {
 
         currencyNames = result.data
 
-        console.log(currencyNames[currentCountry.currencyCode])
+
 
 
       }
@@ -456,15 +523,30 @@ async function getWeatherInfo(country) {
     dataType: 'json',
     data: {
       capital: country.capitalCity,
-      country: country.iso_a2,
-
     },
     success: function (result) {
       //console.log(JSON.stringify(result));            
       if (result.status.name == "ok") {
 
-        country.weather_current.push(result['data']['main']['temp'] - 273.15, result['data']['main']['feels_like'] - 273.15, result['data']['weather']['0']['description'], result['data']['main']['humidity'], result['data']['weather']['0']['icon']);
-
+        //Today's weather forecast
+        country.weather_today.push(result['data']['forecast']['forecastday']['0']['day']['maxtemp_c'],
+          result['data']['forecast']['forecastday']['0']['day']['mintemp_c'],
+          result['data']['forecast']['forecastday']['0']['day']['condition']['text'],
+          result['data']['forecast']['forecastday']['0']['day']['condition']['icon'],
+          result['data']['current']['last_updated']
+        )
+        //Day-1's Weather forecast
+        country.weather_day1.push(result['data']['forecast']['forecastday']['1']['day']['maxtemp_c'],
+          result['data']['forecast']['forecastday']['1']['day']['mintemp_c'],
+          result['data']['forecast']['forecastday']['1']['date'],
+          result['data']['forecast']['forecastday']['1']['day']['condition']['icon']
+        )
+        //Day-2's Weather forecast
+        country.weather_day2.push(result['data']['forecast']['forecastday']['2']['day']['maxtemp_c'],
+          result['data']['forecast']['forecastday']['2']['day']['mintemp_c'],
+          result['data']['forecast']['forecastday']['2']['date'],
+          result['data']['forecast']['forecastday']['2']['day']['condition']['icon']
+        )
       }
     },
     error: function (jqXHR, textStatus, errorThrown) {
@@ -486,14 +568,16 @@ async function getNews(country) {
     success: function (result) {
       //console.log(JSON.stringify(result));              
       if (result.status.name == "ok") {
+        
+        country.news_article1.push(result['data']['news']['0']['title'], result['data']['news']['0']['url'], result['data']['news']['0']['image']);
 
+        country.news_article2.push(result['data']['news']['1']['title'], result['data']['news']['1']['url'], result['data']['news']['1']['image']);
 
-        country.news_article1.push(result['data']['articles']['0']['title'], result['data']['articles']['0']['url'], result['data']['articles']['0']['source']['name'], result['data']['articles']['0']['publishedAt']);
+        country.news_article3.push(result['data']['news']['2']['title'], result['data']['news']['2']['url'], result['data']['news']['2']['image']);
 
-        country.news_article2.push(result['data']['articles']['1']['title'], result['data']['articles']['1']['url'], result['data']['articles']['1']['source']['name'], result['data']['articles']['1']['publishedAt']);
+        country.news_article4.push(result['data']['news']['3']['title'], result['data']['news']['3']['url'], result['data']['news']['3']['image']);
 
-        country.news_article3.push(result['data']['articles']['2']['title'], result['data']['articles']['2']['url'], result['data']['articles']['2']['source']['name'], result['data']['articles']['2']['publishedAt'])
-
+        country.news_article5.push(result['data']['news']['4']['title'], result['data']['news']['4']['url'], result['data']['news']['4']['image']);
       }
     },
     error: function (jqXHR, textStatus, errorThrown) {
@@ -700,7 +784,7 @@ L.easyButton({
       $('#countryInfoArea').text(Math.floor(currentCountry.area));
       $('#countryInfoLanguage').text(currentCountry.languages);
       $('#countryInfoCurrencyCode').text(currentCountry.currencyCode);
-     
+
     }
   }, {
     icon: '&#x238C;',
@@ -722,18 +806,28 @@ L.easyButton({
     title: 'Show Weather Forecast',
     onClick: function (btn, map) {
 
-
       $("#weatherModal").modal("show");
 
       $(".close").click(function () {
         $("#weatherModal").modal('hide');
       });
-      $('#Modal2Title').text(`Weather Forecast for ${currentCountry.capitalCity}`);
-      $('#currentIcon').attr('src', `https://openweathermap.org/img/w/${currentCountry.weather_current[4]}.png`);
-      $('#currentTemp').text(`${Math.floor(currentCountry.weather_current[0])}°C`);
-      $('#currentFeelsLike').text(`${Math.floor(currentCountry.weather_current[1])}°C`);
-      $('#currentConditions').text(currentCountry.weather_current[2].charAt(0).toUpperCase() + currentCountry.weather_current[2].slice(1));
-      $('#currentHumidity').text(currentCountry.weather_current[3]);
+      $('#weatherModalLabel').text(`${currentCountry.capitalCity}, ${currentCountry.name}`);
+      $('#lastUpdated').text(Date.parse(currentCountry.weather_today[4]).toString("HH:mm, dS MMM"));
+      //Today weather forecast
+      $('#todayConditions').html(currentCountry.weather_today[2]);
+      $('#todayIcon').attr("src", `${currentCountry.weather_today[3]}`);
+      $('#todayMaxTemp').html(currentCountry.weather_today[0]);
+      $('#todayMinTemp').html(currentCountry.weather_today[1]);
+      //Day-1 weather forecast
+      $('#day1Date').text(Date.parse(currentCountry.weather_day1[2]).toString("ddd dS"));
+      $('#day1Icon').attr("src", `${currentCountry.weather_day1[3]}`);
+      $('#day1MaxTemp').html(currentCountry.weather_day1[0]);
+      $('#day1MinTemp').html(currentCountry.weather_day1[1]);
+      //Day-2 weather forecast
+      $('#day2Date').text(Date.parse(currentCountry.weather_day2[2]).toString("ddd dS"));
+      $('#day2Icon').attr("src", `${currentCountry.weather_day2[3]}`);
+      $('#day2MaxTemp').html(currentCountry.weather_day2[0]);
+      $('#day2MinTemp').html(currentCountry.weather_day2[1]);
 
 
     }
@@ -764,13 +858,13 @@ L.easyButton({
         $(".close").click(function () {
           $("#newsModal").modal('hide');
         });
-        $('#Modal4Title').html(`Latest Top News Stories for ${currentCountry.name}`);
+        $('#newsModalTitle').html(`Latest Top News Stories for ${currentCountry.name}`);
 
-        for (let i = 1; i <= 3; i++) {
+        for (let i = 1; i <= 5; i++) {
           const article = currentCountry[`news_article${i}`];
-          $(`#article${i}Link`).attr('href', article[1]);
-          $(`#article${i}Title`).text(article[0]);
-          $(`#article${i}Source`).html(`<em>Source: ${article[2]}</em>`);
+          $(`#news${i}Link`).attr('href', article[1]);
+          $(`#news${i}Link`).text(article[0]);
+          $(`#news${i}Img`).attr('src', article[2]);
         }
 
 
@@ -912,7 +1006,7 @@ L.easyButton({
           var baseExchangeRate = 1 / ((baseUSD / exchangeRates[baseCurrency].exchangeRate) * exchangeRates[targetCurrency].exchangeRate);
           baseAmountInput.val((targetAmount * baseExchangeRate).toFixed(2));
         });
-        
+
       });
 
 
@@ -926,53 +1020,64 @@ L.easyButton({
   }]
 }).addTo(map);
 
-var markerClusters = L.markerClusterGroup();
 
-var MapIcon = L.Icon.extend({
-  options: {
-    iconSize: [25, 25],
-    popupAnchor: [0, -50]
-  }
-});
 
 // Loading all markerClusters to the screen
 
 
 function addCountryMarkers(country) {
-  
 
-  var castleIcon = new MapIcon({ iconUrl: 'icons/castle.png' });
-  var stadiumIcon = new MapIcon({ iconUrl: 'icons/stadium.png' });
-  var mountainIcon = new MapIcon({ iconUrl: 'icons/mountain.png' });
-  var airportIcon = new MapIcon({ iconUrl: 'icons/airport.png' });
+  var castleIcon = L.ExtraMarkers.icon({
+    prefix: 'fa-solid',
+    icon: 'fa-chess-rook',
+    iconColor: 'black',
+    markerColor: 'white',
+    shape: 'square'
+  });
+  var stadiumIcon = L.ExtraMarkers.icon({
+    prefix: 'fa-solid',
+    icon: 'fa-futbol',
+    iconColor: 'black',
+    markerColor: 'white',
+    shape: 'square'
+  });
+  var mountainIcon = L.ExtraMarkers.icon({
+    prefix: 'fa-solid',
+    icon: 'fa-mountain',
+    iconColor: 'black',
+    markerColor: 'white',
+    shape: 'square'
+  });
+  var airportIcon = L.ExtraMarkers.icon({
+    prefix: 'fa',
+    icon: 'fa-plane',
+    iconColor: 'black',
+    markerColor: 'white',
+    shape: 'square'
+  });
+
 
   for (i = 0; i < country.marker_castles.length; i++) {
-    var c = L.marker(new L.LatLng(country.marker_castles[i][1], country.marker_castles[i][2]), { icon: castleIcon }).bindPopup(`
-      <b>Castle Name:</b> ${country.marker_castles[i][0]} <br>
-    `);
-    markerClusters.addLayer(c);
+    L.marker(new L.LatLng(country.marker_castles[i][1], country.marker_castles[i][2]), { icon: castleIcon }).bindTooltip(
+      country.marker_castles[i][0], { direction: 'top', sticky: true }).addTo(castles);
   }
 
   for (i = 0; i < country.marker_stadiums.length; i++) {
-    var s = L.marker(new L.LatLng(country.marker_stadiums[i][1], country.marker_stadiums[i][2]), { icon: stadiumIcon }).bindPopup(`
-      <b>Stadium Name:</b> ${country.marker_stadiums[i][0]} <br>
-    `);
-    markerClusters.addLayer(s);
+    L.marker(new L.LatLng(country.marker_stadiums[i][1], country.marker_stadiums[i][2]), { icon: stadiumIcon }).bindTooltip(
+      country.marker_stadiums[i][0], { direction: 'top', sticky: true }).addTo(stadiums);
   }
 
   for (i = 0; i < country.marker_mountains.length; i++) {
-    var m = L.marker(new L.LatLng(country.marker_mountains[i][1], country.marker_mountains[i][2]), { icon: mountainIcon }).bindPopup(`
-      <b>Mountain Name:</b> ${country.marker_mountains[i][0]} <br>
-    `);
-    markerClusters.addLayer(m);
+    L.marker(new L.LatLng(country.marker_mountains[i][1], country.marker_mountains[i][2]), { icon: mountainIcon }).bindTooltip(
+      country.marker_mountains[i][0], { direction: 'top', sticky: true }).addTo(mountains);
   }
 
   for (i = 0; i < country.marker_airports.length; i++) {
-    var a = L.marker(new L.LatLng(country.marker_airports[i][1], country.marker_airports[i][2]), { icon: airportIcon }).bindPopup(`
-      <b>Airport Name:</b> ${country.marker_airports[i][0]} <br>
-    `);
-    markerClusters.addLayer(a);
+    L.marker(new L.LatLng(country.marker_airports[i][1], country.marker_airports[i][2]), { icon: airportIcon }).bindTooltip(
+      country.marker_airports[i][0], { direction: 'top', sticky: true }).addTo(airports);
   }
+
 
   map.addLayer(markerClusters);
 }
+

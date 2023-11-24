@@ -5,7 +5,7 @@
 
 	$executionStartTime = microtime(true);
 
-	$url='https://api.openweathermap.org/data/2.5/weather?q=' . $_REQUEST['capital'] . '&' . $_REQUEST['country'] . '&appid=472b6092f2260914a1f6ac28285df95c';
+	$url='https://api.weatherapi.com/v1/forecast.json?key=103efdc73946430586104519231811&q=' . $_REQUEST['capital'] . '&days=3&aqi=no&alerts=no';
 	
 
 	$ch = curl_init();

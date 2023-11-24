@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "bootstrap": "^5.3.2",
+    "bootstrap-icons": "^1.11.1",
+    "leaflet-easybutton": "^2.4.0",
+    "leaflet-extra-markers": "^1.2.2"
+  }
+}
