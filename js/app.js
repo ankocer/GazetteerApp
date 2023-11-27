@@ -781,7 +781,7 @@ L.easyButton({
       $('#countryInfoTimezone').text(currentCountry.timezone);
       $('#countryInfoOffset').text(currentCountry.timeOffset);
       $('#countryInfoPopulation').text(`${(currentCountry.population / 1000000).toFixed(1)} M`);
-      $('#countryInfoArea').text(Math.floor(currentCountry.area));
+      $('#countryInfoArea').text((Math.floor(currentCountry.area).toLocaleString('en-US')));
       $('#countryInfoLanguage').text(currentCountry.languages);
       $('#countryInfoCurrencyCode').text(currentCountry.currencyCode);
 
@@ -816,18 +816,18 @@ L.easyButton({
       //Today weather forecast
       $('#todayConditions').html(currentCountry.weather_today[2]);
       $('#todayIcon').attr("src", `${currentCountry.weather_today[3]}`);
-      $('#todayMaxTemp').html(currentCountry.weather_today[0]);
-      $('#todayMinTemp').html(currentCountry.weather_today[1]);
+      $('#todayMaxTemp').html(Math.round(currentCountry.weather_today[0]));
+      $('#todayMinTemp').html(Math.round(currentCountry.weather_today[1]));
       //Day-1 weather forecast
       $('#day1Date').text(Date.parse(currentCountry.weather_day1[2]).toString("ddd dS"));
       $('#day1Icon').attr("src", `${currentCountry.weather_day1[3]}`);
-      $('#day1MaxTemp').html(currentCountry.weather_day1[0]);
-      $('#day1MinTemp').html(currentCountry.weather_day1[1]);
+      $('#day1MaxTemp').html(Math.round(currentCountry.weather_day1[0]));
+      $('#day1MinTemp').html(Math.round(currentCountry.weather_day1[1]));
       //Day-2 weather forecast
       $('#day2Date').text(Date.parse(currentCountry.weather_day2[2]).toString("ddd dS"));
       $('#day2Icon').attr("src", `${currentCountry.weather_day2[3]}`);
-      $('#day2MaxTemp').html(currentCountry.weather_day2[0]);
-      $('#day2MinTemp').html(currentCountry.weather_day2[1]);
+      $('#day2MaxTemp').html(Math.round(currentCountry.weather_day2[0]));
+      $('#day2MinTemp').html(Math.round(currentCountry.weather_day2[1]));
 
 
     }
@@ -891,7 +891,7 @@ L.easyButton({
   states: [{
     icon: "none",
     stateName: 'unchecked',
-    title: 'Show Country Information',
+    title: 'Show Wikipedia Link',
     onClick: function (btn, map) {
 
       $("#wikiModal").modal("show");
@@ -924,7 +924,7 @@ L.easyButton({
   states: [{
     icon: "none",
     stateName: 'unchecked',
-    title: 'Show Country Information',
+    title: 'Show Country Exchange Rate',
     onClick: function (btn, map) {
 
       $("#exchangeModal").modal("show");
