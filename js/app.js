@@ -754,8 +754,6 @@ async function getMapMarkers(country) {
 
 
 
-
-
 /*--------------------------------------------------------------------------------------*/
 // Country information Button (Modal-1)
 
